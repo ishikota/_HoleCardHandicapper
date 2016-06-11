@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+# Resolve path configuration
+import os
+import sys
+import importlib
+import argparse
+import json
+
+root = os.path.join(os.path.dirname(__file__), "..")
+learning_data_path = os.path.join(root, "learning_data")
+sys.path.append(root)
+sys.path.append(learning_data_path)
+
+# Start script code from here
+from learning_data.generator.hole_evaluator import HoleEvaluator
+from pypokerengine.engine.card import Card
+import random
+
+def parse_args():
+  parser = argparse.ArgumentParser(description="Set test data configuration")
+  parser.add_argument("--num", type=int, required=True, help="number of data to generate")
+  args = parser.parse_args()
+  return args.num
+
+def generate_data(num):
+  data = []
+  for _ in range(num):
+    hole = [Card.from_id(random.randint(1, 52)) for _ in range(2)]
+    data.append(HoleEvaluator.eval_hole(hole))
+    print data[-1]
+  return data
+
+def save_data(data):
+  pass  #TODO save data to csv file or somewhere
+
+def main():
+  data_num = parse_args()
+  data = generate_data(data_num)
+  save_data(data)
+
+if __name__ == '__main__':
+  main()
