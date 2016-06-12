@@ -35,8 +35,8 @@ class HoleEvaluator:
   def __fill_blank_card(self, community_):
     community = [Card.from_id(card.to_id()) for card in community_]  # deep copy
     need_card = 5 - len(community)
-    for _ in range(need_card):
-      card_id = random.randint(1, 52)
+    card_id_range = range(1, 53)
+    for card_id in random.sample(card_id_range, need_card):
       community.append(Card.from_id(card_id))
     return community
 
