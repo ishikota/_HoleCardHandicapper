@@ -16,6 +16,8 @@ sys.path.append(learning_data_path)
 from learning_data.generator.hole_evaluator import HoleEvaluator
 from pypokerengine.engine.card import Card
 import random
+import csv
+import time
 
 def parse_args():
   parser = argparse.ArgumentParser(description="Set test data configuration")
@@ -29,16 +31,22 @@ def generate_data(num):
   for _ in range(num):
     hole = [Card.from_id(cid) for cid in random.sample(card_id_range, 2)]
     data.append(HoleEvaluator.eval_hole(hole))
-    print data[-1]
+    print data[-1]  # For debug
   return data
 
-def save_data(data):
-  pass  #TODO save data to csv file or somewhere
+def save_data(file_path, data):
+  with open(file_path, 'w') as f:
+    writer = csv.writer(f, lineterminator='\n')
+    writer.writerows(data)
+
+def gen_file_path(data_num):
+  file_name = "%d-data-at-%s.csv" % (data_num, time.time())
+  return os.path.join(learning_data_path, "data", file_name)
 
 def main():
   data_num = parse_args()
   data = generate_data(data_num)
-  save_data(data)
+  save_data(gen_file_path(data_num), data)
 
 if __name__ == '__main__':
   main()
