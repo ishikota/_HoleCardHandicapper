@@ -21,9 +21,9 @@ import time
 
 def parse_args():
   parser = argparse.ArgumentParser(description="Set test data configuration")
-  parser.add_argument("--num", type=int, required=True, help="number of data to generate")
+  parser.add_argument("--n", type=int, required=True, help="number of data to generate")
   args = parser.parse_args()
-  return args.num
+  return args.n
 
 def generate_data(num):
   data = []
