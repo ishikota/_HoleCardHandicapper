@@ -28,7 +28,8 @@ class HoleEvaluator:
       detail = "hand was [%s]. but holecard do not contribute." % detail[0]
     else:
       value = self.__scale_evaluation_value(value)
-    return value, self.__card_to_str(hole), self.__card_to_str(complete_community), detail
+    return value, hole[0].to_id(), hole[1].to_id(), self.__analyze_hand(value),\
+        self.__card_to_str(hole), self.__card_to_str(complete_community), detail
 
 
   @classmethod
