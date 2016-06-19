@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+# Resolve path configuration
+import os
+import sys
+import importlib
+import argparse
+import json
+
+root = os.path.join(os.path.dirname(__file__), "..")
+module_root_path = os.path.join(root, "holecard_handicapper")
+sys.path.append(root)
+sys.path.append(module_root_path)
+
+# Start script code from here
+from holecard_handicapper.model.sample_sin_fitting import data_reader
+from holecard_handicapper.training.trainer import Trainer
+
+def parse_args():
+  parser = argparse.ArgumentParser(description="Receive path of model builder")
+  parser.add_argument("--model_builder_path", required=True, help="path to your model builder class")
+  parser.add_argument("--trainer_params_path", required=True, help="path to your trainer config file")
+  args = parser.parse_args()
+  trainer_params = read_trainer_params(args.trainer_params_path)
+  return args.model_builder_path, trainer_params
+
+def read_trainer_params(file_path):
+  with open(file_path) as json_file:
+    data = json.load(json_file)
+    return (data["nb_epoch"], data["batch_size"], data["verbose"], data["validation_split"])
+
+def main():
+  model_builder_path, trainer_params = parse_args()
+  data = data_reader.load_data(None, None)
+  trainer = Trainer(*trainer_params)
+  trainer.train(data, model_builder_path)
+
+if __name__ == '__main__':
+  main()

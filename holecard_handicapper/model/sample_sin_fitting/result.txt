@@ -1,0 +1,1 @@
+loss on test = 1.172699
