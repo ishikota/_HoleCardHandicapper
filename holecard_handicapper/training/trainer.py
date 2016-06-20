@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from keras.callbacks import Callback
+from keras.callbacks import EarlyStopping
 
 class LossHistory(Callback):
 
@@ -27,10 +28,11 @@ class Trainer:
     (X_train, Y_train), (X_test, Y_test) = data
     model = self.__gen_model(model_builder_path)
     history = LossHistory()
+    early_stopping = EarlyStopping(monitor='val_loss', patience=50, mode='min')
     model.fit(X_train, Y_train,
         nb_epoch=self.params['nb_epoch'], batch_size=self.params['batch_size'],
         verbose=self.params['verbose'], validation_split=self.params['validation_split'],
-        callbacks=[history])
+        callbacks=[history, early_stopping])
     score = model.evaluate(X_test, Y_test, batch_size=self.params['batch_size'])
     out_dir_path = self.__fetch_output_directory(model_builder_path)
     self.__save_result(score, history, out_dir_path)
@@ -48,7 +50,7 @@ class Trainer:
     return builder.build()
 
   def __save_result(self, score, history, directory_path):
-    X = np.arange(self.params['nb_epoch'])
+    X = np.arange(len(history.losses))
     plt.plot(X, history.losses, 'r', alpha=0.5, label='loss')
     plt.plot(X, history.val_losses, 'b', alpha=0.5, label='val_loss')
     plt.legend()
