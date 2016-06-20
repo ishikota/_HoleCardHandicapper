@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+# HOW TO USE
+# ./run_model --model_directory_path ../holecard_handicapper/model/handicapper_fitting/5_layer
+
+# Resolve path configuration
+import os
+import sys
+import importlib
+import argparse
+import json
+
+root = os.path.join(os.path.dirname(__file__), "..")
+module_root_path = os.path.join(root, "holecard_handicapper")
+sys.path.append(root)
+sys.path.append(module_root_path)
+
+# Start script code from here
+import numpy as np
+from keras.utils import np_utils
+from keras.models import model_from_json
+from keras.optimizers import SGD, Adam, RMSprop
+from holecard_handicapper.training.trainer import Trainer
+from pypokerengine.engine.card import Card
+
+def parse_args():
+  parser = argparse.ArgumentParser(description="Receive path of model builder")
+  parser.add_argument("--model_directory_path", required=True, help="path to directory which include your model")
+  args = parser.parse_args()
+  return args.model_directory_path
+
+def load_model(directory_path):
+  arrchitecture_path = os.path.join(directory_path, 'model_arrchitecture.json')
+  weights_path = os.path.join(directory_path, 'model_weights.h5')
+  with open(arrchitecture_path) as f:
+    model = model_from_json(f.read())
+    model.load_weights(weights_path)
+    model.compile(RMSprop(), 'mse')
+  return model
+
+def gen_x(hole_id1, hole_id2):
+  return np_utils.to_categorical([hole_id1], 52) + np_utils.to_categorical([hole_id2], 52)
+
+def gen_test_case():
+  return [
+      ("bad", [Card(Card.CLUB, 3), Card(Card.CLUB, 4)]),
+      ("pocket", [Card(Card.HEART, 12), Card(Card.SPADE, 12)]),
+      ("connector", [Card(Card.CLUB, 8), Card(Card.DIAMOND, 9)]),
+      ("suited", [Card(Card.DIAMOND, 2), Card(Card.DIAMOND, 13)]),
+      ("suited connector", [Card(Card.SPADE, 4), Card(Card.SPADE, 5)]),
+      ("gapper", [Card(Card.HEART, 7), Card(Card.SPADE, 9)]),
+      ("premier hand", [Card(Card.SPADE, 14), Card(Card.HEART, 14)])
+  ]
+
+def test_model(model):
+  for title, cards in gen_test_case():
+    card_ids = [card.to_id() for card in cards]
+    X = gen_x(*card_ids)
+    score = model.predict(X)
+    print "score = %f : %s (%s) " % (score, [str(card) for card in cards], title)
+
+def main():
+  model_dir_path = parse_args()
+  model = load_model(model_dir_path)
+  test_model(model)
+
+if __name__ == '__main__':
+  main()
