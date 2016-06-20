@@ -27,11 +27,9 @@ class HoleEvaluator:
     if not ContributionChecker.check(hole, value):
       value = max([card.rank for card in hole])
       detail = "hand was [%s]. but holecard do not contribute." % detail[0]
-    else:
-      value = self.__scale_evaluation_value(value)
-    return value, hole[0].to_id(), hole[1].to_id(), self.__analyze_hand(value),\
+    scaled_value = self.__scale_evaluation_value(value)
+    return scaled_value, hole[0].to_id(), hole[1].to_id(), self.__analyze_hand(value),\
         self.__card_to_str(hole), self.__card_to_str(complete_community), detail
-
 
   @classmethod
   def __fill_blank_card(self, community_):
