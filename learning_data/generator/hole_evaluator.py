@@ -2,6 +2,7 @@ from pypokerengine.engine.card import Card
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from learning_data.generator.contribution_checker import ContributionChecker
 import random
+import math
 
 class HoleEvaluator:
 
@@ -47,7 +48,12 @@ class HoleEvaluator:
 
   @classmethod
   def __scale_evaluation_value(self, value):
-    return value
+    hand = self.__analyze_hand(value)
+    high = HandEvaluator._HandEvaluator__high_rank(value)
+    low  = HandEvaluator._HandEvaluator__low_rank(value)
+    strength = HandEvaluator._HandEvaluator__mask_strength(value) >> 8
+    scale = 0 if strength == 0 else math.log(strength, 2) + 1
+    return int(scale * 28 + high + low)
 
   @classmethod
   def __analyze_detail(self, value):
