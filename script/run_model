@@ -16,12 +16,9 @@ sys.path.append(root)
 sys.path.append(module_root_path)
 
 # Start script code from here
-import numpy as np
-from keras.utils import np_utils
 from keras.models import model_from_json
 from keras.optimizers import SGD, Adam, RMSprop
-from holecard_handicapper.training.trainer import Trainer
-from pypokerengine.engine.card import Card
+from holecard_handicapper.training.model_tester import ModelTester
 
 def parse_args():
   parser = argparse.ArgumentParser(description="Receive path of model builder")
@@ -38,31 +35,11 @@ def load_model(directory_path):
     model.compile(RMSprop(), 'mse')
   return model
 
-def gen_x(hole_id1, hole_id2):
-  return np_utils.to_categorical([hole_id1], 52) + np_utils.to_categorical([hole_id2], 52)
-
-def gen_test_case():
-  return [
-      ("bad", [Card(Card.CLUB, 3), Card(Card.CLUB, 4)]),
-      ("pocket", [Card(Card.HEART, 12), Card(Card.SPADE, 12)]),
-      ("connector", [Card(Card.CLUB, 8), Card(Card.DIAMOND, 9)]),
-      ("suited", [Card(Card.DIAMOND, 2), Card(Card.DIAMOND, 13)]),
-      ("suited connector", [Card(Card.SPADE, 4), Card(Card.SPADE, 5)]),
-      ("gapper", [Card(Card.HEART, 7), Card(Card.SPADE, 9)]),
-      ("premier hand", [Card(Card.SPADE, 14), Card(Card.HEART, 14)])
-  ]
-
-def test_model(model):
-  for title, cards in gen_test_case():
-    card_ids = [card.to_id() for card in cards]
-    X = gen_x(*card_ids)
-    score = model.predict(X)
-    print "score = %f : %s (%s) " % (score, [str(card) for card in cards], title)
-
 def main():
   model_dir_path = parse_args()
   model = load_model(model_dir_path)
-  test_model(model)
+  tester = ModelTester()
+  print tester.run_popular_test_case(model)
 
 if __name__ == '__main__':
   main()
