@@ -8,6 +8,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from keras.callbacks import Callback
 from keras.callbacks import EarlyStopping
+from holecard_handicapper.training.model_tester import ModelTester
 
 class LossHistory(Callback):
 
@@ -34,8 +35,10 @@ class Trainer:
         verbose=self.params['verbose'], validation_split=self.params['validation_split'],
         callbacks=[history, early_stopping])
     score = model.evaluate(X_test, Y_test, batch_size=self.params['batch_size'])
+    tester = ModelTester()
+    sample_result = tester.run_popular_test_case(model)
     out_dir_path = self.__fetch_output_directory(model_builder_path)
-    self.__save_result(score, history, out_dir_path)
+    self.__save_result(score, sample_result, history, out_dir_path)
     self.__save_model(model, out_dir_path)
 
 
@@ -49,15 +52,15 @@ class Trainer:
     builder = m.ModelBuilder()
     return builder.build()
 
-  def __save_result(self, score, history, directory_path):
+  def __save_result(self, score, sample_result, history, directory_path):
     X = np.arange(len(history.losses))
     plt.plot(X, history.losses, 'r', alpha=0.5, label='loss')
     plt.plot(X, history.val_losses, 'b', alpha=0.5, label='val_loss')
     plt.legend()
     plt.savefig(os.path.join(directory_path, 'loss_graph.png'))
     with open(os.path.join(directory_path, 'result.txt'), 'w') as f:
-      result = "loss on test = %f" % score
-      f.write(result)
+      result = "loss on test = %f\n\n" % score
+      f.write(result+sample_result)
 
   def __save_model(self, model, directory_path):
     model_json = model.to_json()
