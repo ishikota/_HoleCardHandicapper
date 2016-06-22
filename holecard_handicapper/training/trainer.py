@@ -108,5 +108,4 @@ class Trainer:
     model_json = model.to_json()
     with open(os.path.join(directory_path, 'model_arrchitecture.json'), 'w') as f:
       f.write(model_json)
-    model.save_weights(os.path.join(directory_path, 'model_weights.h5'), overwrite=True)
 
