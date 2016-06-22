@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from keras.callbacks import Callback
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from holecard_handicapper.training.model_tester import ModelTester
 from slack.messanger import Messenger
 
@@ -23,14 +23,15 @@ class LossHistory(Callback):
 
 class SlackCallback(Callback):
 
-  def __init__(self, slack, nb_epoch):
+  def __init__(self, slack, nb_epoch, target_name):
     self.nb_epoch = nb_epoch
     self.slack = slack
     self.checkpoint = [nb_epoch/4, nb_epoch/2, 3*nb_epoch/4]
     self.complete_rate = [0.25, 0.50, 0.75]
+    self.target_name = target_name
 
   def on_train_begin(self, logs={}):
-    self.slack.post_message("Start training!!")
+    self.slack.post_message("Start training of [%s]!!" % self.target_name)
 
   def on_epoch_end(self, epoch, logs={}):
     if epoch in self.checkpoint:
@@ -54,7 +55,8 @@ class Trainer:
   def train(self, data, model_builder_path):
     (X_train, Y_train), (X_test, Y_test) = data
     model = self.__gen_model(model_builder_path)
-    callbacks = self.__gen_callbacks(True, self.params['slack']['use'], self.params['nb_epoch'])
+    out_dir_path = self.__fetch_output_directory(model_builder_path)
+    callbacks = self.__gen_callbacks(True, self.params['slack']['use'], self.params['nb_epoch'], out_dir_path)
     history = callbacks[0]
     model.fit(X_train, Y_train,
         nb_epoch=self.params['nb_epoch'], batch_size=self.params['batch_size'],
@@ -63,17 +65,19 @@ class Trainer:
     score = model.evaluate(X_test, Y_test, batch_size=self.params['batch_size'])
     tester = ModelTester()
     sample_result = tester.run_popular_test_case(model)
-    out_dir_path = self.__fetch_output_directory(model_builder_path)
     self.__save_result(score, sample_result, history, out_dir_path)
     self.__save_model(model, out_dir_path)
 
 
-  def __gen_callbacks(self, early_stopping, slack, nb_epoch):
-    callbacks = [LossHistory()]
+  def __gen_callbacks(self, early_stopping, slack, nb_epoch, out_dir_path):
+    weight_save_path = os.path.join(out_dir_path, 'model_weights.h5')
+    checkpointer = ModelCheckpoint(filepath=weight_save_path, verbose=1, save_best_only=True)
+    callbacks = [LossHistory(), checkpointer]
     if early_stopping:
-      callbacks.append(EarlyStopping(monitor='val_loss', patience=50, mode='min'))
+      callbacks.append(EarlyStopping(monitor='val_loss', patience=100, mode='min'))
     if slack:
-      callbacks.append(SlackCallback(self.slack, nb_epoch))
+      target_name = os.path.basename(os.path.abspath(os.path.normpath(out_dir_path)))
+      callbacks.append(SlackCallback(self.slack, nb_epoch, target_name))
     return callbacks
 
   def __fetch_output_directory(self, builder_path):
