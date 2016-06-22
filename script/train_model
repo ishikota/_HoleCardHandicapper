@@ -21,9 +21,10 @@ def parse_args():
   parser.add_argument("--trainer_params_path", required=True, help="path to your trainer config file")
   parser.add_argument("--data_file_path", help="path to your data src file")
   parser.add_argument("--test_ratio", type=float, default=0.1, help="ratio between training data and test data")
+  parser.add_argument("--slack_token", default=None, help="API token of slack")
   args = parser.parse_args()
   trainer_params = read_trainer_params(args.trainer_params_path)
-  return args.model_builder_path, trainer_params, args.data_file_path, args.test_ratio
+  return args.model_builder_path, trainer_params, args.data_file_path, args.test_ratio, args.slack_token
 
 def read_trainer_params(file_path):
   with open(file_path) as json_file:
@@ -36,10 +37,12 @@ def import_data_reader(directory_path):
   return m
 
 def main():
-  model_builder_path, trainer_params, data_path, test_ratio = parse_args()
+  model_builder_path, trainer_params, data_path, test_ratio, slack_token = parse_args()
   data_reader = import_data_reader(os.path.dirname(model_builder_path))
   data = data_reader.load_data(data_path, test_ratio)
   trainer = Trainer(*trainer_params)
+  if slack_token:
+    trainer.use_slack(slack_token)
   trainer.train(data, model_builder_path)
 
 if __name__ == '__main__':
