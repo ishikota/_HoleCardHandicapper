@@ -91,9 +91,11 @@ class Trainer:
     return builder.build()
 
   def __save_result(self, score, sample_result, history, directory_path):
+    target_name = os.path.basename(os.path.abspath(os.path.normpath(directory_path)))
     X = np.arange(len(history.losses))
     plt.plot(X, history.losses, 'r', alpha=0.5, label='loss')
     plt.plot(X, history.val_losses, 'b', alpha=0.5, label='val_loss')
+    plt.title(target_name)
     plt.legend()
     img_path = os.path.join(directory_path, 'loss_graph.png')
     plt.savefig(img_path)
@@ -102,7 +104,7 @@ class Trainer:
       f.write(result+sample_result)
       if self.params['slack']['result']:
         self.slack.post_image(img_path)
-        self.slack.post_message("[RESULT] "+ result + sample_result)
+        self.slack.post_message("[RESULT] %s\n%s%s" % (target_name, result, sample_result))
 
   def __save_model(self, model, directory_path):
     model_json = model.to_json()
