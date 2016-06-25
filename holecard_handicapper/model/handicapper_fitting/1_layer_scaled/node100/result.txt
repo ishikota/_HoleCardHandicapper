@@ -1,0 +1,10 @@
+loss on test = 1903.630760
+
+*** POPULAR TEST CASE ***
+score = 46.356647 : ['C3', 'C4'] (bad) 
+score = 73.345787 : ['HQ', 'SQ'] (pocket) 
+score = 50.080490 : ['C8', 'D9'] (connector) 
+score = 42.842873 : ['D2', 'DK'] (suited) 
+score = 52.276730 : ['S4', 'S5'] (suited connector) 
+score = 47.713219 : ['H7', 'S9'] (gapper) 
+score = 66.604332 : ['SA', 'HA'] (premier hand) 

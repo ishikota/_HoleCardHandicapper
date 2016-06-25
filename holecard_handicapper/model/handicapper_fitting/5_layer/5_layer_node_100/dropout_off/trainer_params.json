@@ -1,0 +1,6 @@
+{
+  "nb_epoch" : 1000,
+  "batch_size" : 128,
+  "verbose" : 2,
+  "validation_split" : 0.1
+}
