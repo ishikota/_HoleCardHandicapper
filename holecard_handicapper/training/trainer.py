@@ -1,6 +1,7 @@
 import os
 import sys
 import importlib
+import time
 
 import numpy as np
 import matplotlib
@@ -53,6 +54,7 @@ class Trainer:
 
 
   def train(self, data, model_builder_path):
+    start_time = time.time()
     (X_train, Y_train), (X_test, Y_test) = data
     model = self.__gen_model(model_builder_path)
     out_dir_path = self.__fetch_output_directory(model_builder_path)
@@ -66,7 +68,8 @@ class Trainer:
     score = model.evaluate(X_test, Y_test, batch_size=self.params['batch_size'])
     tester = ModelTester()
     sample_result = tester.run_popular_test_case(model)
-    self.__save_result(score, sample_result, out_dir_path)
+    exe_time = time.time() - start_time
+    self.__save_result(score, sample_result, exe_time, out_dir_path)
     self.__save_img(history, out_dir_path)
 
 
@@ -94,13 +97,15 @@ class Trainer:
     builder = m.ModelBuilder()
     return builder.build()
 
-  def __save_result(self, score, sample_result, directory_path):
+  def __save_result(self, score, sample_result, exe_time, directory_path):
     with open(os.path.join(directory_path, 'result.txt'), 'w') as f:
+      target_name = self.__fetch_target_name(directory_path)
+      time_msg = "(exe_time = %d(s))" % exe_time
       result = "loss on test = %f\n\n" % score
-      f.write(result+sample_result)
+      msg = "[RESULT] %s %s\n%s%s" % (target_name, time_msg, result, sample_result)
+      f.write(msg)
       if self.params['slack']['result']:
-        target_name = self.__fetch_target_name(directory_path)
-        self.slack.post_message("[RESULT] %s\n%s%s" % (target_name, result, sample_result))
+        self.slack.post_message(msg)
 
   def __save_img(self, history, directory_path):
     target_name = self.__fetch_target_name(directory_path)
