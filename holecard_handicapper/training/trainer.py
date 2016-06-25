@@ -56,6 +56,7 @@ class Trainer:
     (X_train, Y_train), (X_test, Y_test) = data
     model = self.__gen_model(model_builder_path)
     out_dir_path = self.__fetch_output_directory(model_builder_path)
+    self.__save_model(model, out_dir_path)
     callbacks = self.__gen_callbacks(True, self.params['slack']['use'], self.params['nb_epoch'], out_dir_path)
     history = callbacks[0]
     model.fit(X_train, Y_train,
@@ -65,8 +66,8 @@ class Trainer:
     score = model.evaluate(X_test, Y_test, batch_size=self.params['batch_size'])
     tester = ModelTester()
     sample_result = tester.run_popular_test_case(model)
-    self.__save_result(score, sample_result, history, out_dir_path)
-    self.__save_model(model, out_dir_path)
+    self.__save_result(score, sample_result, out_dir_path)
+    self.__save_img(history, out_dir_path)
 
 
   def __gen_callbacks(self, early_stopping, slack, nb_epoch, out_dir_path):
@@ -76,12 +77,15 @@ class Trainer:
     if early_stopping:
       callbacks.append(EarlyStopping(monitor='val_loss', patience=100, mode='min'))
     if slack:
-      target_name = os.path.basename(os.path.abspath(os.path.normpath(out_dir_path)))
+      target_name = self.__fetch_target_name(out_dir_path)
       callbacks.append(SlackCallback(self.slack, nb_epoch, target_name))
     return callbacks
 
   def __fetch_output_directory(self, builder_path):
     return os.path.dirname(builder_path)
+
+  def __fetch_target_name(self, directory_path):
+      return os.path.basename(os.path.abspath(os.path.normpath(directory_path)))
 
   def __gen_model(self, builder_path):
     sys.path.append(os.path.dirname(builder_path))
@@ -90,8 +94,16 @@ class Trainer:
     builder = m.ModelBuilder()
     return builder.build()
 
-  def __save_result(self, score, sample_result, history, directory_path):
-    target_name = os.path.basename(os.path.abspath(os.path.normpath(directory_path)))
+  def __save_result(self, score, sample_result, directory_path):
+    with open(os.path.join(directory_path, 'result.txt'), 'w') as f:
+      result = "loss on test = %f\n\n" % score
+      f.write(result+sample_result)
+      if self.params['slack']['result']:
+        target_name = self.__fetch_target_name(directory_path)
+        self.slack.post_message("[RESULT] %s\n%s%s" % (target_name, result, sample_result))
+
+  def __save_img(self, history, directory_path):
+    target_name = self.__fetch_target_name(directory_path)
     X = np.arange(len(history.losses))
     plt.plot(X, history.losses, 'r', alpha=0.5, label='loss')
     plt.plot(X, history.val_losses, 'b', alpha=0.5, label='val_loss')
@@ -99,12 +111,8 @@ class Trainer:
     plt.legend()
     img_path = os.path.join(directory_path, 'loss_graph.png')
     plt.savefig(img_path)
-    with open(os.path.join(directory_path, 'result.txt'), 'w') as f:
-      result = "loss on test = %f\n\n" % score
-      f.write(result+sample_result)
-      if self.params['slack']['result']:
-        self.slack.post_image(img_path)
-        self.slack.post_message("[RESULT] %s\n%s%s" % (target_name, result, sample_result))
+    if self.params['slack']['result']:
+      self.slack.post_image(img_path)
 
   def __save_model(self, model, directory_path):
     model_json = model.to_json()
