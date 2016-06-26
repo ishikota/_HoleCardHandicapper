@@ -1,6 +1,7 @@
 from pypokerengine.engine.card import Card
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from learning_data.generator.contribution_checker import ContributionChecker
+from learning_data.generator.round_simulator import RoundSimulator
 import random
 import math
 
@@ -30,6 +31,14 @@ class HoleEvaluator:
     scaled_value = self.__scale_evaluation_value(value)
     return scaled_value, hole[0].to_id(), hole[1].to_id(), self.__analyze_hand(value),\
         self.__card_to_str(hole), self.__card_to_str(complete_community), detail
+
+  @classmethod
+  def estimate_win_rate(self, hole, player_num, simulation_num):
+    simulation_result = [\
+        RoundSimulator.simulation(player_num, hole, self.__fill_blank_card([]))\
+        for _ in range(simulation_num)]
+    win_count = len([1 for is_win in simulation_result if is_win])
+    return 1.0 * win_count / simulation_num
 
   @classmethod
   def __fill_blank_card(self, community_):
