@@ -70,11 +70,12 @@ class Trainer:
     sample_result = tester.run_popular_test_case(model)
     exe_time = time.time() - start_time
     self.__save_result(score, sample_result, exe_time, out_dir_path)
+    self.__save_last_weight(model, out_dir_path)
     self.__save_img(history, out_dir_path)
 
 
   def __gen_callbacks(self, early_stopping, slack, nb_epoch, out_dir_path):
-    weight_save_path = os.path.join(out_dir_path, 'model_weights.h5')
+    weight_save_path = os.path.join(out_dir_path, 'best_model_weights.h5')
     checkpointer = ModelCheckpoint(filepath=weight_save_path, verbose=1, save_best_only=True)
     callbacks = [LossHistory(), checkpointer]
     if early_stopping:
@@ -123,4 +124,7 @@ class Trainer:
     model_json = model.to_json()
     with open(os.path.join(directory_path, 'model_arrchitecture.json'), 'w') as f:
       f.write(model_json)
+
+  def __save_last_weight(self, model ,directory_path):
+    model.save_weights(os.path.join(directory_path, 'last_model_weights.h5'), overwrite=True)
 
