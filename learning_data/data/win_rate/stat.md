@@ -14,3 +14,10 @@
 | simulatioin | min | max | mean |
 |:-----------:|:---:|:----:|:---:|
 | 10000 | 0.2305 | 0.6999 | 0.359012293 |
+
+### Simulation count effect stat
+| simulation | Mean Squared Difference | MAX DIFF|
+|:-----------:|:---:|:----:|
+| 100  -> 1000  (2player) | 0.002362 | 0.163000 |
+| 1000 -> 10000 (3player) | 0.000260 | 0.064100 |
+| 1000 -> 10000 (4player) | 0.000242 | 0.062400 |
